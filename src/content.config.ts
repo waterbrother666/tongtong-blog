@@ -32,9 +32,10 @@ const tutorials = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    series: z.string(), // 系列标识,与文件夹名一致,如 agent-intro
+    series: z.string(), // 系列标识,与文件夹名一致,如 claude-usage
     seriesTitle: z.string(), // 系列显示名
     seriesDescription: z.string().optional(), // 系列简介,写在第 1 章即可
+    cover: z.string().optional(), // 系列封面图,写在第 1 章即可
     order: z.number(), // 章节序号
     date: z.coerce.date(),
     tags: z.array(z.string()).default([]),

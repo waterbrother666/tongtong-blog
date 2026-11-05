@@ -13,7 +13,6 @@ export const NAV = [
   { href: '/tutorials', label: '教程' },
   { href: '/projects', label: '项目' },
   { href: '/archive', label: '归档' },
-  { href: '/about', label: '关于' },
 ];
 
 // Giscus 评论:到 https://giscus.app 填写你的公开仓库,把生成的值填到这里。留空则不显示评论区。

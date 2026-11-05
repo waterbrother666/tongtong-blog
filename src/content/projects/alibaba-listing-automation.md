@@ -47,6 +47,12 @@ private: true
 
 ![设置页](/projects/alibaba-listing-automation/client-settings.png)
 
+## 配套的生图 Skill
+
+发品表不是凭空来的。前面还有一个运行在 AccioWork 里的生图发品 Skill,从商品图片开始,一步步做到导出发品表。每个关键节点(场景表、母版八图、标题卖点样稿、审核状态)都由人来确认,进度会存进项目档案,对话中断了也能接着做。做完的发品表,再交给客户端批量发布:
+
+![生图发品 Skill 的流程:从商品图片到发品表,再交给客户端发布](/projects/alibaba-listing-automation/skill-flow.svg)
+
 ## 工作原理
 
 发品表、助手 app、本机连接组件、Chrome 扩展和国际站后台之间的关系,以及每条商品的处理顺序:

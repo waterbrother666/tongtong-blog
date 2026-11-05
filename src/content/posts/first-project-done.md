@@ -19,6 +19,10 @@ category: 随笔
 
 **前半段在 AccioWork 里,生图加整理资料。** 从商品图片开始,先做母版图和场景主图,运营确认完标题和卖点之后,再整理成一张发品表。这一段是靠 AccioWork 上的 Skill 来跑的,人只要在关键的地方确认一下就行。
 
+整个 Skill 的流程大概是这样的:
+
+![生图发品 Skill 的流程:从商品图片到发品表,再交给客户端发布](/projects/alibaba-listing-automation/skill-flow.svg)
+
 **后半段交给客户端,批量发布。** 运营把发品表拖进客户端,它会先帮你检查每一行,告诉你这行能发、要跳过,还是资料有问题。确认之后,它就会去国际站后台复制参考商品,换上新标题、卖点和图片,提交,最后把新商品 ID 写回表格里。
 
 ![客户端主界面:选表后自动检查,每行显示能不能发、为什么](/projects/alibaba-listing-automation/client-publish.png)

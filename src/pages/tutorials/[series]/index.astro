@@ -1,0 +1,32 @@
+---
+import Shell from '../../../layouts/Shell.astro';
+import { getSeries, chapterSlug } from '../../../lib/tutorials';
+import { fmtDate, readInfo } from '../../../lib/cover';
+export async function getStaticPaths() {
+  const all = await getSeries();
+  return all.map((s) => ({ params: { series: s.series }, props: { s } }));
+}
+const { s } = Astro.props;
+const first = s.chapters[0];
+---
+<Shell title={s.title} description={s.description} bannerTitle={s.title} bannerSub={`${s.chapters.length} 章 · 更新于 ${fmtDate(s.updated)}`} sidebar={false}>
+  <div class="reveal"><div class="glass p-6 md:p-10">
+    <a href="/tutorials" class="text-sm" style="color:var(--muted)">← 全部教程</a>
+    <p class="mt-4 leading-relaxed" style="color:var(--muted)">{s.description}</p>
+    <a href={`/tutorials/${s.series}/${chapterSlug(first)}`} class="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white" style="background:linear-gradient(90deg,var(--violet),var(--cyan))">开始阅读 →</a>
+    <ol class="mt-8 space-y-3">
+      {s.chapters.map((c) => (
+        <li>
+          <a href={`/tutorials/${s.series}/${chapterSlug(c)}`} class="tilt glass group flex items-center gap-4 p-4">
+            <span class="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl font-mono text-sm font-bold text-white" style="background:linear-gradient(135deg,var(--violet),var(--cyan))">{String(c.data.order).padStart(2, '0')}</span>
+            <span class="relative min-w-0 flex-1">
+              <span class="block font-semibold transition-colors group-hover:text-[var(--violet)]">{c.data.title}</span>
+              <span class="mt-0.5 block line-clamp-1 text-sm" style="color:var(--muted)">{c.data.description}</span>
+            </span>
+            <span class="relative hidden text-xs sm:block" style="color:var(--muted)">约 {readInfo(c.body).min} 分钟</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </div></div>
+</Shell>

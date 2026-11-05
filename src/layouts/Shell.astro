@@ -1,0 +1,16 @@
+---
+import Base from './Base.astro';
+import Sidebar from '../components/Sidebar.astro';
+interface Props { title?: string; description?: string; banner?: 'full' | 'slim'; bannerTitle?: string; bannerSub?: string; sidebar?: boolean; }
+const { sidebar = true, ...rest } = Astro.props;
+---
+<Base {...rest}>
+  <div class:list={['mx-auto max-w-6xl px-4', 'mt-0', 'relative z-10']}>
+    {sidebar ? (
+      <div class="grid gap-6 lg:grid-cols-[17rem_1fr]">
+        <Sidebar />
+        <div class="min-w-0"><slot /></div>
+      </div>
+    ) : <slot />}
+  </div>
+</Base>

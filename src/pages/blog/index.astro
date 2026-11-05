@@ -1,0 +1,9 @@
+---
+import { getCollection } from 'astro:content';
+import Shell from '../../layouts/Shell.astro';
+import PostItem from '../../components/PostItem.astro';
+const posts = (await getCollection('posts', (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
+---
+<Shell title="文章" bannerTitle="文章" bannerSub={`共 ${posts.length} 篇`}>
+  <div class="space-y-5">{posts.map((p, i) => <PostItem post={p} delay={i * 60} />)}</div>
+</Shell>

@@ -1,0 +1,47 @@
+---
+import { getCollection } from 'astro:content';
+import { SITE } from '../config';
+import { avatar } from '../lib/avatar';
+const posts = await getCollection('posts', (p) => !p.data.draft);
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const tagCount = new Map<string, number>();
+posts.forEach((p) => p.data.tags.forEach((t) => tagCount.set(t, (tagCount.get(t) ?? 0) + 1)));
+const tags = [...tagCount].sort((a, b) => b[1] - a[1]);
+const stats = [['文章', posts.length, '/blog'], ['标签', tagCount.size, '/tags'], ['项目', projects.length, '/projects']] as const;
+---
+<aside class="space-y-5 lg:sticky lg:top-24 lg:self-start">
+  <div class="reveal"><div class="glass p-6 text-center">
+    <div class="mx-auto h-28 w-28 rounded-full p-[3px]" style="background:conic-gradient(from 90deg,var(--violet),var(--cyan),var(--violet))">
+      {avatar
+        ? <img src={`/${avatar}`} alt={SITE.author} class="h-full w-full rounded-full object-cover" />
+        : <div class="grid h-full w-full place-items-center rounded-full text-4xl font-bold text-white" style="background:linear-gradient(135deg,var(--violet),var(--cyan))">T</div>}
+    </div>
+    <h2 class="mt-4 text-xl font-bold">{SITE.author}</h2>
+    <p class="mt-1 text-sm" style="color:var(--muted)">做 AI 应用,也写下来。</p>
+    <div class="mt-4 grid grid-cols-3 gap-2">
+      {stats.map(([k, v, href]) => <a href={href} class="rounded-xl py-2 transition hover:bg-black/5 dark:hover:bg-white/10"><div class="text-lg font-bold">{v}</div><div class="text-xs" style="color:var(--muted)">{k}</div></a>)}
+    </div>
+    <a href={SITE.github} target="_blank" rel="noopener" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition hover:opacity-90" style="background:linear-gradient(90deg,var(--violet),var(--cyan))">
+      <svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.71 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+    <a href={SITE.twitter} target="_blank" rel="noopener" class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition hover:border-[var(--cyan)] hover:text-[var(--cyan)]" style="border-color:var(--glass-border)">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      @tongtongtmj
+    </a>
+  </div></div>
+
+  {tags.length > 0 && <div class="reveal" style="--d:80ms"><div class="glass p-5">
+    <h3 class="mb-3 text-sm font-semibold">标签</h3>
+    <div class="flex flex-wrap gap-2">
+      {tags.map(([t, n], i) => <a href={`/tags/${t}`} class:list={['chip transition hover:scale-105', i % 2 && 'chip-cyan']}>#{t} <span class="ml-1 opacity-60">{n}</span></a>)}
+    </div>
+  </div></div>}
+
+  <div class="reveal" style="--d:160ms"><div class="glass p-5">
+    <div class="mb-3 flex items-center justify-between"><h3 class="text-sm font-semibold">项目</h3><a href="/projects" class="text-xs text-[var(--violet)]">全部 →</a></div>
+    <ul class="space-y-2 text-sm">
+      {projects.map((p) => <li><a href={`/projects/${p.id}`} class="flex items-center gap-2 transition hover:text-[var(--violet)]"><span class="h-1.5 w-1.5 rounded-full" style="background:var(--cyan)"></span><span class="line-clamp-1">{p.data.title}</span></a></li>)}
+    </ul>
+  </div></div>
+</aside>

@@ -1,0 +1,41 @@
+---
+import { getCollection, render } from 'astro:content';
+import Shell from '../../layouts/Shell.astro';
+import Giscus from '../../components/Giscus.astro';
+import { fmtDate, readInfo } from '../../lib/cover';
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', (p) => !p.data.draft);
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const { chars, min } = readInfo(post.body);
+---
+<Shell title={post.data.title} description={post.data.description} bannerTitle={post.data.title} bannerSub={`${fmtDate(post.data.date)} · ${post.data.category} · ${chars} 字 · 约 ${min} 分钟`} sidebar={false}>
+  <div class="lg:grid lg:grid-cols-[1fr_15rem] lg:gap-6">
+    <article class="min-w-0">
+      <div class="glass p-6 md:p-10">
+        <div class="mb-6 flex flex-wrap items-center gap-2">
+          <a href="/blog" class="text-sm" style="color:var(--muted)">← 返回文章</a>
+          {post.data.tags.map((t, i) => <a href={`/tags/${t}`} class:list={['chip', i % 2 && 'chip-cyan']}>#{t}</a>)}
+        </div>
+        <div class="prose max-w-none dark:prose-invert prose-headings:scroll-mt-24"><Content /></div>
+        <Giscus />
+      </div>
+    </article>
+    {toc.length > 0 && (
+      <aside class="mt-6 hidden lg:mt-0 lg:block">
+        <nav class="glass sticky top-24 p-5 text-sm">
+          <p class="mb-3 font-semibold">目录</p>
+          <ul class="space-y-2 border-l" style="border-color:var(--glass-border)">
+            {toc.map((h) => <li style={`padding-left:${(h.depth - 2) * 12 + 12}px`}><a href={`#${h.slug}`} data-slug={h.slug} class="toc-link block transition-colors hover:text-[var(--violet)]" style="color:var(--muted)">{h.text}</a></li>)}
+          </ul>
+        </nav>
+      </aside>
+    )}
+  </div>
+</Shell>
+<style is:global>
+  .toc-link.active { color: var(--violet) !important; font-weight: 600; }
+</style>

@@ -1,0 +1,16 @@
+---
+// 不再使用插画横幅:标题直接放在站点背景上(背景从页面最顶部开始)
+interface Props { size?: 'full' | 'slim'; title?: string; sub?: string; }
+const { size = 'slim', title, sub } = Astro.props;
+---
+{size === 'full' ? (
+  <section class="mx-auto w-full max-w-6xl px-5 pb-10 pt-36 md:pt-44">
+    <h1 class="shimmer text-5xl font-extrabold leading-tight md:text-7xl">通通的小站</h1>
+    <p class="mt-4 text-lg" style="color:var(--muted)">把做过的事情写下来</p>
+  </section>
+) : title ? (
+  <section class="mx-auto w-full max-w-6xl px-5 pb-8 pt-32 md:pt-36">
+    <h1 class="text-3xl font-extrabold md:text-4xl">{title}</h1>
+    {sub && <p class="mt-2" style="color:var(--muted)">{sub}</p>}
+  </section>
+) : <div class="pt-28"></div>}

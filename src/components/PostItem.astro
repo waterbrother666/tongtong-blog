@@ -1,0 +1,22 @@
+---
+import { fmtDate, readInfo } from '../lib/cover';
+interface Props { post: any; delay?: number; }
+const { post, delay = 0 } = Astro.props;
+const { chars, min } = readInfo(post.body);
+---
+<div class="reveal" style={`--d:${delay}ms`}>
+  <a href={`/blog/${post.id}`} class="tilt glass group block p-6">
+    <div class="relative flex items-center gap-4">
+      <div class="min-w-0 flex-1">
+        <h3 class="flex items-center gap-3 text-xl font-bold leading-snug"><span class="inline-block h-5 w-1 shrink-0 rounded" style="background:linear-gradient(var(--violet),var(--cyan))"></span><span class="transition-colors group-hover:text-[var(--violet)]">{post.data.title}</span></h3>
+        <div class="mt-3 flex flex-wrap items-center gap-2 text-xs" style="color:var(--muted)">
+          <span>📅 {fmtDate(post.data.date)}</span><span>·</span><span>{post.data.category}</span>
+          {post.data.tags.map((t: string, i: number) => <span class:list={['chip', i % 2 && 'chip-cyan']}>#{t}</span>)}
+        </div>
+        <p class="mt-3 line-clamp-2 text-sm leading-relaxed" style="color:var(--muted)">{post.data.description}</p>
+        <p class="mt-3 text-xs" style="color:var(--muted)">{chars} 字 · 约 {min} 分钟</p>
+      </div>
+      <div class="hidden h-20 w-9 shrink-0 place-items-center rounded-xl text-lg transition group-hover:translate-x-1 sm:grid" style="background:color-mix(in srgb,var(--violet) 14%,transparent);color:var(--violet)">›</div>
+    </div>
+  </a>
+</div>

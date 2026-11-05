@@ -1,0 +1,20 @@
+---
+import { getCollection } from 'astro:content';
+import Shell from '../layouts/Shell.astro';
+import { fmtDate } from '../lib/cover';
+const posts = (await getCollection('posts', (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
+const byYear = new Map<number, typeof posts>();
+for (const p of posts) { const y = p.data.date.getFullYear(); byYear.set(y, [...(byYear.get(y) ?? []), p]); }
+---
+<Shell title="归档" bannerTitle="归档" bannerSub={`共 ${posts.length} 篇`}>
+  <div class="reveal"><div class="glass p-6 md:p-8">
+    {[...byYear].map(([y, list]) => (
+      <section class="mb-8 last:mb-0">
+        <h2 class="grad-text mb-4 text-2xl font-extrabold">{y}</h2>
+        <ul class="space-y-3 border-l-2 pl-5" style="border-color:color-mix(in srgb,var(--violet) 40%,transparent)">
+          {list.map((p) => <li class="flex gap-4"><time class="w-24 shrink-0 font-mono text-sm" style="color:var(--muted)">{fmtDate(p.data.date)}</time><a href={`/blog/${p.id}`} class="transition hover:text-[var(--violet)]">{p.data.title}</a></li>)}
+        </ul>
+      </section>
+    ))}
+  </div></div>
+</Shell>

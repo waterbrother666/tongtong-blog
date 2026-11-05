@@ -1,0 +1,18 @@
+---
+import { getCollection } from 'astro:content';
+import Shell from '../../layouts/Shell.astro';
+import PostItem from '../../components/PostItem.astro';
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', (p) => !p.data.draft);
+  const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
+  return tags.map((tag) => ({
+    params: { tag },
+    props: { posts: posts.filter((p) => p.data.tags.includes(tag)).sort((a, b) => +b.data.date - +a.data.date) },
+  }));
+}
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+---
+<Shell title={`#${tag}`} bannerTitle={`#${tag}`} bannerSub={`${posts.length} 篇文章`}>
+  <div class="space-y-5">{posts.map((p, i) => <PostItem post={p} delay={i * 60} />)}</div>
+</Shell>

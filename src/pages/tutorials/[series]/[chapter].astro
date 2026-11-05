@@ -1,0 +1,79 @@
+---
+import { render } from 'astro:content';
+import Shell from '../../../layouts/Shell.astro';
+import Giscus from '../../../components/Giscus.astro';
+import { getSeries, chapterSlug } from '../../../lib/tutorials';
+import { fmtDate, readInfo } from '../../../lib/cover';
+export async function getStaticPaths() {
+  const all = await getSeries();
+  return all.flatMap((s) =>
+    s.chapters.map((chapter, i) => ({
+      params: { series: s.series, chapter: chapterSlug(chapter) },
+      props: { s, chapter, prev: s.chapters[i - 1], next: s.chapters[i + 1] },
+    })),
+  );
+}
+const { s, chapter, prev, next } = Astro.props;
+const { Content, headings } = await render(chapter);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const { chars, min } = readInfo(chapter.body);
+const url = (c: typeof chapter) => `/tutorials/${s.series}/${chapterSlug(c)}`;
+---
+<Shell title={`${chapter.data.title} · ${s.title}`} description={chapter.data.description} bannerTitle={chapter.data.title} bannerSub={`${s.title} · 第 ${chapter.data.order} 章 · ${fmtDate(chapter.data.date)} · ${chars} 字 · 约 ${min} 分钟`} sidebar={false}>
+  <div class="lg:grid lg:grid-cols-[1fr_16rem] lg:gap-6">
+    <article class="min-w-0">
+      <div class="glass p-6 md:p-10">
+        <div class="mb-6 flex flex-wrap items-center gap-2">
+          <a href={`/tutorials/${s.series}`} class="text-sm" style="color:var(--muted)">← {s.title}</a>
+          {chapter.data.tags.map((t, i) => <span class:list={['chip', i % 2 && 'chip-cyan']}>#{t}</span>)}
+        </div>
+        <div class="prose max-w-none dark:prose-invert prose-headings:scroll-mt-24"><Content /></div>
+
+        <nav class="mt-12 grid gap-4 sm:grid-cols-2">
+          {prev ? (
+            <a href={url(prev)} class="tilt glass group block p-4">
+              <span class="relative block text-xs" style="color:var(--muted)">← 上一章</span>
+              <span class="relative mt-1 block font-semibold transition-colors group-hover:text-[var(--violet)]">{prev.data.title}</span>
+            </a>
+          ) : <span></span>}
+          {next ? (
+            <a href={url(next)} class="tilt glass group block p-4 text-right">
+              <span class="relative block text-xs" style="color:var(--muted)">下一章 →</span>
+              <span class="relative mt-1 block font-semibold transition-colors group-hover:text-[var(--violet)]">{next.data.title}</span>
+            </a>
+          ) : (
+            <a href="/tutorials" class="tilt glass group block p-4 text-right">
+              <span class="relative block text-xs" style="color:var(--muted)">已读完本系列</span>
+              <span class="relative mt-1 block font-semibold transition-colors group-hover:text-[var(--violet)]">回到全部教程 →</span>
+            </a>
+          )}
+        </nav>
+        <Giscus />
+      </div>
+    </article>
+
+    <aside class="mt-6 space-y-5 lg:mt-0">
+      <div class="glass p-5 text-sm lg:sticky lg:top-24">
+        <p class="mb-3 font-semibold">{s.title}</p>
+        <ol class="space-y-1">
+          {s.chapters.map((c) => (
+            <li>
+              <a href={url(c)} class:list={['flex items-start gap-2 rounded-lg px-2 py-1.5 transition hover:bg-black/5 dark:hover:bg-white/10', c.id === chapter.id && 'font-semibold text-[var(--violet)]']}>
+                <span class="mt-0.5 font-mono text-xs opacity-60">{String(c.data.order).padStart(2, '0')}</span>
+                <span>{c.data.title}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+        {toc.length > 0 && (
+          <div class="mt-4 hidden border-t pt-4 lg:block" style="border-color:var(--glass-border)">
+            <p class="mb-2 font-semibold">本章目录</p>
+            <ul class="space-y-2 border-l" style="border-color:var(--glass-border)">
+              {toc.map((h) => <li style={`padding-left:${(h.depth - 2) * 12 + 12}px`}><a href={`#${h.slug}`} data-slug={h.slug} class="toc-link block transition-colors hover:text-[var(--violet)]" style="color:var(--muted)">{h.text}</a></li>)}
+            </ul>
+          </div>
+        )}
+      </div>
+    </aside>
+  </div>
+</Shell>

@@ -1,0 +1,6 @@
+---
+import { SITE } from '../config';
+---
+<footer class="mt-16 pb-8 text-center text-sm" style="color:var(--muted)">
+  <p>© {new Date().getFullYear()} <span class="grad-text font-medium">{SITE.author}</span> · Built with Astro · <a class="hover:text-[var(--violet)]" href="/rss.xml">RSS</a> · <a class="hover:text-[var(--violet)]" href={SITE.github} target="_blank" rel="noopener">GitHub</a></p>
+</footer>

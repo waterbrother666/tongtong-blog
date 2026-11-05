@@ -1,0 +1,10 @@
+---
+import { getCollection } from 'astro:content';
+import Shell from '../layouts/Shell.astro';
+import PostItem from '../components/PostItem.astro';
+const posts = (await getCollection('posts', (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
+---
+<Shell banner="full">
+  <div class="mb-4 flex items-end justify-between px-1"><h2 class="text-xl font-bold">最新文章</h2><a href="/blog" class="text-sm text-[var(--violet)]">全部 →</a></div>
+  <div class="space-y-5">{posts.map((p, i) => <PostItem post={p} delay={i * 60} />)}</div>
+</Shell>

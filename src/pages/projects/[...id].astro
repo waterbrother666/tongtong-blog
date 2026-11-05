@@ -1,0 +1,40 @@
+---
+import { getCollection, render } from 'astro:content';
+import Shell from '../../layouts/Shell.astro';
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
+}
+const { project } = Astro.props;
+const { Content, headings } = await render(project);
+const toc = headings.filter((h) => h.depth === 2);
+---
+<Shell title={project.data.title} description={project.data.description} bannerTitle={project.data.title} bannerSub={project.data.private ? '私有项目 · 仅展示介绍' : '开源项目'} sidebar={false}>
+  <div class="lg:grid lg:grid-cols-[1fr_15rem] lg:gap-6">
+    <article class="min-w-0">
+      <div class="glass p-6 md:p-10">
+        <div class="mb-6 flex flex-wrap items-center gap-2">
+          <a href="/projects" class="text-sm" style="color:var(--muted)">← 返回项目</a>
+          {project.data.tags.map((t, i) => <span class:list={['chip', i % 2 && 'chip-cyan']}>{t}</span>)}
+        </div>
+        {project.data.repo && (
+          <a href={project.data.repo} target="_blank" rel="noopener" class="mb-6 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white" style="background:linear-gradient(90deg,var(--violet),var(--cyan))">查看源码 ↗</a>
+        )}
+        <div class="prose max-w-none dark:prose-invert prose-headings:scroll-mt-24"><Content /></div>
+      </div>
+    </article>
+    {toc.length > 0 && (
+      <aside class="mt-6 hidden lg:mt-0 lg:block">
+        <nav class="glass sticky top-24 p-5 text-sm">
+          <p class="mb-3 font-semibold">目录</p>
+          <ul class="space-y-2 border-l" style="border-color:var(--glass-border)">
+            {toc.map((h) => <li class="pl-3"><a href={`#${h.slug}`} data-slug={h.slug} class="toc-link block transition-colors hover:text-[var(--violet)]" style="color:var(--muted)">{h.text}</a></li>)}
+          </ul>
+        </nav>
+      </aside>
+    )}
+  </div>
+</Shell>
+<style is:global>
+  .toc-link.active { color: var(--violet) !important; font-weight: 600; }
+</style>

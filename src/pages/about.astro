@@ -1,0 +1,22 @@
+---
+import Shell from '../layouts/Shell.astro';
+import { SITE } from '../config';
+---
+<Shell title="关于" bannerTitle="关于我" bannerSub="AI 应用开发者">
+  <div class="reveal"><div class="glass p-6 md:p-10">
+    <div class="prose max-w-none dark:prose-invert prose-headings:scroll-mt-24">
+      <p>你好,我是 tongtong。我做 AI Agent、自动化工具和 AI 应用,喜欢把做过的东西整理成文章。</p>
+      <h2>我在做什么</h2>
+      <ul>
+        <li>基于大模型的 Agent 与 RAG 应用</li>
+        <li>浏览器与桌面端的流程自动化</li>
+        <li>面向业务场景的 AI 工作台</li>
+      </ul>
+      <h2>技术栈</h2>
+      <p>Python · FastAPI · TypeScript · React · PostgreSQL · Playwright</p>
+      <h2>联系我</h2>
+      <p><a href={SITE.github} target="_blank" rel="noopener">GitHub @waterbrother666</a>{SITE.email && <> · <a href={`mailto:${SITE.email}`}>{SITE.email}</a></>}</p>
+      <p><em>这页是占位介绍,请改成你自己的内容(文件:src/pages/about.astro)。</em></p>
+    </div>
+  </div></div>
+</Shell>

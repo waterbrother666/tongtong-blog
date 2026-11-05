@@ -76,7 +76,3 @@ private: true
 ## 技术栈
 
 FastAPI、自建 Agent Loop、PostgreSQL 17 加 pgvector、React 19,生成模型使用 DeepSeek,向量与重排使用火山引擎的模型服务。
-
-## 说明
-
-这是私有项目,这里只展示介绍,不提供源码。

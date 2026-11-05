@@ -86,7 +86,3 @@ private: true
 ## 技术栈
 
 React、TypeScript 做前端工作台,FastAPI 加 SQLAlchemy 做业务后端,Playwright 做浏览器自动化,视觉语言模型做附件理解,PostgreSQL 存储,Celery 加 Redis 负责定时与异步任务,Docker Compose 与 Nginx 部署。
-
-## 说明
-
-这是私有项目,涉及真实业务系统,因此只展示介绍和已脱敏的截图,不提供源码。

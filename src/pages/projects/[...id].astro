@@ -9,7 +9,7 @@ const { project } = Astro.props;
 const { Content, headings } = await render(project);
 const toc = headings.filter((h) => h.depth === 2);
 ---
-<Shell title={project.data.title} description={project.data.description} bannerTitle={project.data.title} bannerSub={project.data.private ? '私有项目 · 仅展示介绍' : '开源项目'} sidebar={false}>
+<Shell title={project.data.title} description={project.data.description} bannerTitle={project.data.title} sidebar={false}>
   <div class="lg:grid lg:grid-cols-[1fr_15rem] lg:gap-6">
     <article class="min-w-0">
       <div class="glass p-6 md:p-10">

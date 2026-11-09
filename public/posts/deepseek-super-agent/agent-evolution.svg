@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="480" viewBox="0 0 1600 480" role="img" aria-labelledby="title desc">
+<title id="title">Agent 工作方式示意</title>
+<desc id="desc">对比问答、推理、工作流和 Agent Loop 四种工作方式，它们可以按任务需要并存。</desc>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#40bd91"/></marker>
+</defs>
+<rect width="1600" height="480" rx="20" fill="#0d1117"/>
+<g font-family="-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif">
+  <g fill="#151b23" stroke="#394451" stroke-width="2">
+    <rect x="62" y="147" width="292" height="220" rx="16"/>
+    <rect x="452" y="147" width="292" height="220" rx="16"/>
+    <rect x="842" y="147" width="292" height="220" rx="16"/>
+  </g>
+  <rect x="1232" y="147" width="306" height="220" rx="16" fill="#10251e" stroke="#40bd91" stroke-width="2"/>
+  <g stroke="#40bd91" stroke-width="3" fill="none" marker-end="url(#arrow)">
+    <path d="M354 256H430"/><path d="M744 256H820"/><path d="M1134 256H1210"/>
+  </g>
+  <g text-anchor="middle">
+    <g fill="#eaf0f6" font-size="24" font-weight="700"><text x="208" y="205">一问一答</text><text x="598" y="205">先推理，再回答</text><text x="988" y="205">工作流</text><text x="1385" y="205">Agent Loop</text></g>
+    <g fill="#aebbc9" font-size="17"><text x="208" y="255">用户提问 → 模型回答</text><text x="598" y="255">用户提问 → 模型推理</text><text x="598" y="285">→ 输出回答</text><text x="988" y="255">按预设步骤逐个运行</text><text x="988" y="285">→ 返回结果</text><text x="1385" y="255">模型决定下一步行动</text><text x="1385" y="285">调用工具或子 Agent</text><text x="1385" y="315">根据结果继续或回答</text></g>
+  </g>
+</g>
+</svg>

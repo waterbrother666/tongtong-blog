@@ -2,10 +2,11 @@
 import { getCollection } from 'astro:content';
 import Shell from '../layouts/Shell.astro';
 import Card from '../components/Card.astro';
+import ProjectDeck from '../components/ProjectDeck.astro';
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 ---
 <Shell title="项目" bannerTitle="项目" bannerSub="做过的 AI 应用与自动化项目" sidebar={false}>
-  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    {projects.map((p, i) => <Card title={p.data.title} description={p.data.description} tags={p.data.tags} cover={p.data.cover} href={`/projects/${p.id}`} badge={p.data.private ? '私有项目' : '开源'} delay={i * 80} />)}
-  </div>
+  <ProjectDeck>
+    {projects.map((p, i) => <div class="dcard"><Card title={p.data.title} description={p.data.description} tags={p.data.tags} cover={p.data.cover} href={`/projects/${p.id}`} badge={p.data.private ? '私有项目' : '开源'} delay={i * 80} /></div>)}
+  </ProjectDeck>
 </Shell>

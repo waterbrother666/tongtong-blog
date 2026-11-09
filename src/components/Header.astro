@@ -40,9 +40,28 @@ const active = (href: string) => href === '/' ? path === '/' : path.startsWith(h
     document.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
       if (t.closest('#theme-toggle')) {
-        const dark = document.documentElement.classList.toggle('dark');
-        try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch {}
-        window.dispatchEvent(new Event('themechange'));
+        const root = document.documentElement;
+        const apply = () => {
+          const dark = root.classList.toggle('dark');
+          try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch {}
+          window.dispatchEvent(new Event('themechange'));
+        };
+        const doc = document as any;
+        const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!doc.startViewTransition || calm) { apply(); return; }
+        // 圆形扩散:新主题从按钮处像水波一样铺开
+        const r = (t.closest('#theme-toggle') as HTMLElement).getBoundingClientRect();
+        const x = r.left + r.width / 2, y = r.top + r.height / 2;
+        const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+        root.classList.add('theme-anim');
+        const vt = doc.startViewTransition(apply);
+        vt.ready.then(() => {
+          root.animate(
+            { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+            { duration: 650, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', pseudoElement: '::view-transition-new(root)' }
+          );
+        }).catch(() => {});
+        vt.finished.finally(() => root.classList.remove('theme-anim'));
       } else if (t.closest('#menu-toggle')) {
         document.getElementById('mobile-menu')?.classList.toggle('hidden');
       }

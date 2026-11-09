@@ -85,3 +85,9 @@ body {
 .prose figure { margin: 1.5em 0; }
 
 .toc-link.active { color: var(--violet) !important; font-weight: 600; }
+
+/* 主题切换:圆形扩散(只在切换时生效,不影响页面转场) */
+.theme-anim::view-transition-old(root),
+.theme-anim::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+.theme-anim::view-transition-old(root) { z-index: 1; }
+.theme-anim::view-transition-new(root) { z-index: 2; }

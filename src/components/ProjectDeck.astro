@@ -1,0 +1,178 @@
+---
+// 项目卡牌:收起时像握在手里的扇形,点击后弹出成一排
+---
+<noscript><style>.deck .deck-grid { visibility: visible !important; }</style></noscript>
+<div class="deck collapsed" data-deck>
+  <div class="deck-grid grid gap-6 sm:grid-cols-2 lg:grid-cols-3" style="visibility:hidden">
+    <slot />
+  </div>
+  <button type="button" class="deck-hint" data-deck-hint aria-label="展开项目卡牌">
+    <span class="deck-hint-text">点一下,展开项目</span>
+  </button>
+</div>
+
+<style is:global>
+  .deck { position: relative; }
+  .deck-grid { transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .deck-grid > .dcard {
+    transform-origin: 50% 110%;
+    transition: transform 0.65s cubic-bezier(0.2, 0.9, 0.25, 1.05), opacity 0.4s;
+    transition-delay: calc(var(--i, 0) * 70ms);
+  }
+
+  /* 收起:扇形握牌 */
+  .deck.collapsed .deck-grid > .dcard {
+    transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--r, 0deg)) translate(var(--nx, 0px), var(--lift, 0px)) scale(var(--s, 1));
+    z-index: var(--z, 1);
+    cursor: pointer;
+    transition-delay: 0ms;
+    transition-duration: 0.45s;
+  }
+  .deck.collapsed .deck-grid > .dcard * { pointer-events: none; }
+  .deck.collapsed .deck-grid > .dcard .tilt { transform: none !important; }
+
+  /* 悬浮(由脚本判定):这张置顶上抬放大,邻居让开 */
+  .deck.collapsed .deck-grid > .dcard.is-active { --lift: -34px; --s: 1.05; z-index: 30; }
+  .deck.collapsed .deck-grid > .dcard.is-active .glass {
+    border-color: color-mix(in srgb, var(--violet) 55%, transparent);
+    box-shadow: 0 28px 60px -20px color-mix(in srgb, var(--violet) 60%, transparent);
+  }
+  /* 光泽扫过 */
+  .deck.collapsed .deck-grid > .dcard .glass::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.28) 50%, transparent 65%);
+    transform: translateX(-120%);
+  }
+  .deck.collapsed .deck-grid > .dcard.is-active .glass::after { opacity: 1; transform: translateX(120%); transition: transform 0.8s ease, opacity 0.2s; }
+  /* 测量时去掉变换;首次布局前先藏起来,避免闪一下 */
+  .deck.measuring .deck-grid > .dcard { transform: none !important; transition: none !important; }
+  .deck.no-anim .deck-grid, .deck.no-anim .deck-grid > .dcard { transition: none !important; }
+  .deck:not([data-laid]) .deck-grid { visibility: hidden; }
+
+  /* 收起时卡牌不透明,叠在一起不会透出后面的字;两侧的牌略暗,显出层次 */
+  .deck .glass { transition: background-color 0.4s, box-shadow 0.3s, border-color 0.3s; }
+  .deck.collapsed .deck-grid > .dcard .glass {
+    background: color-mix(in srgb, var(--bg) 86%, var(--fg) 14%);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.7);
+  }
+  .deck.collapsed .deck-grid > .dcard:not(.is-active) .glass::before {
+    content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none;
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  /* 卡牌自带的逐张渐显会让牌半透明地叠在一起,这里关掉,改成整副牌一起淡入 */
+  .deck .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .deck[data-laid] .deck-grid { animation: deck-in 0.6s ease both; }
+  @keyframes deck-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+  /* 展开后:回到网格,保留普通卡片的悬浮效果 */
+  .deck:not(.collapsed) .deck-grid > .dcard { transform: none; }
+
+  .deck-hint {
+    position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+    padding: 0.45rem 1.1rem; border-radius: 999px; font-size: 0.85rem; color: var(--muted);
+    background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(12px);
+    transition: opacity 0.3s;
+  }
+  .deck:not(.collapsed) .deck-hint { opacity: 0; pointer-events: none; }
+  .deck.collapsed .deck-hint:hover { color: var(--violet); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .deck-grid, .deck-grid > .dcard { transition: none !important; }
+  }
+</style>
+
+<script>
+  function setup(deck: HTMLElement) {
+    if (deck.dataset.ready) return;
+    deck.dataset.ready = '1';
+    const grid = deck.querySelector<HTMLElement>('.deck-grid')!;
+    const cards = [...grid.querySelectorAll<HTMLElement>(':scope > .dcard')];
+    const spread = () => (grid.clientWidth < 640 ? 34 : 78);
+    let full = 0;
+
+    const layout = () => {
+      if (!deck.classList.contains('collapsed')) return;
+      deck.classList.add('measuring');
+      grid.style.height = '';
+      full = grid.offsetHeight;
+      const g = grid.getBoundingClientRect();
+      const mid = (cards.length - 1) / 2;
+      const first = cards[0].getBoundingClientRect();
+      const cardW = first.width;
+      const collapsedH = Math.min(full, 470);
+      cards.forEach((c, i) => {
+        const r = c.getBoundingClientRect();
+        const k = i - mid;
+        const tx = g.left + g.width / 2 - cardW / 2 - r.left + k * spread();
+        const ty = g.top - r.top + Math.abs(k) * 16;
+        c.style.setProperty('--tx', `${tx}px`);
+        c.style.setProperty('--ty', `${ty}px`);
+        c.style.setProperty('--r', `${k * 8}deg`);
+        c.style.setProperty('--z', String(10 - Math.abs(Math.round(k))));
+        c.style.setProperty('--i', String(i));
+      });
+      grid.style.height = `${collapsedH + 50}px`;
+      void grid.offsetHeight;
+      deck.classList.remove('measuring');
+      void grid.offsetHeight; // 先把新位置算出来,再允许动画,避免从平铺滑到扇形
+      deck.dataset.laid = '1';
+      grid.style.visibility = '';
+    };
+
+    // 悬浮判定:用脚本选中最上面那张,选中后保持,避免上抬时来回闪
+    let active = -1;
+    const setActive = (idx: number) => {
+      if (idx === active) return;
+      active = idx;
+      cards.forEach((c, i) => {
+        c.classList.toggle('is-active', i === idx);
+        c.style.setProperty('--nx', idx < 0 || i === idx ? '0px' : `${i > idx ? 26 : -26}px`);
+      });
+    };
+    grid.addEventListener('pointermove', (e) => {
+      if (!deck.classList.contains('collapsed') || e.pointerType === 'touch') return;
+      if (active >= 0 && cards[active].matches(':hover')) return;
+      const top = document.elementsFromPoint(e.clientX, e.clientY).map((el) => el.closest('.dcard')).find(Boolean) as HTMLElement | undefined;
+      setActive(top ? cards.indexOf(top) : -1);
+    });
+    grid.addEventListener('pointerleave', () => setActive(-1));
+
+    const open = () => {
+      if (!deck.classList.contains('collapsed')) return;
+      grid.style.height = `${full}px`;
+      deck.classList.remove('collapsed');
+      setTimeout(() => { if (!deck.classList.contains('collapsed')) grid.style.height = ''; }, 700);
+    };
+    const close = () => {
+      if (deck.classList.contains('collapsed')) return;
+      grid.style.height = `${grid.offsetHeight}px`;
+      deck.classList.add('collapsed');
+      requestAnimationFrame(layout);
+    };
+
+    cards.forEach((c) => c.addEventListener('click', (e) => {
+      if (deck.classList.contains('collapsed')) { e.preventDefault(); setActive(-1); open(); }
+    }, true));
+    deck.querySelector('[data-deck-hint]')!.addEventListener('click', open);
+    // 点空白处收回
+    document.addEventListener('click', (e) => {
+      if (!deck.isConnected) return;
+      const t = e.target as HTMLElement;
+      if (t.closest('.dcard, [data-deck-hint], header, nav, a, button')) return;
+      close();
+    });
+    window.addEventListener('resize', () => { if (deck.classList.contains('collapsed')) layout(); });
+    // 等图片和字体就绪后再测量
+    deck.classList.add('no-anim');
+    layout();
+    requestAnimationFrame(() => requestAnimationFrame(() => { layout(); deck.classList.remove('no-anim'); }));
+    window.addEventListener('load', layout);
+    document.fonts?.ready.then(layout);
+    new ResizeObserver(() => layout()).observe(grid);
+  }
+  const init = () => document.querySelectorAll<HTMLElement>('[data-deck]').forEach(setup);
+  document.addEventListener('astro:page-load', init);
+  init();
+</script>

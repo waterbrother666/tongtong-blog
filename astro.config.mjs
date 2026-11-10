@@ -4,9 +4,8 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
-// 部署后把 site 改成你的真实域名
 export default defineConfig({
-  site: 'https://tongtong.example.com',
+  site: 'https://tongtong-blog.pages.dev',
   devToolbar: { enabled: false },
   integrations: [mdx(), sitemap()],
   markdown: {

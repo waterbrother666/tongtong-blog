@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Banner from '../components/Banner.astro';
+import Intro from '../components/Intro.astro';
 import { SITE } from '../config';
 interface Props { title?: string; description?: string; banner?: 'full' | 'slim'; bannerTitle?: string; bannerSub?: string; vt?: string; }
 const { title, description = SITE.description, banner = 'slim', bannerTitle, bannerSub, vt } = Astro.props;
@@ -35,6 +36,13 @@ const fullTitle = title ? `${title} · ${SITE.title}` : SITE.title;
         }
         apply();
         document.addEventListener('astro:after-swap', apply);
+        // 入场动画:每次打开浏览器只出现一次,而且只在从首页进站时出现;加 ?intro=1 可以重看
+        try {
+          var force = new URLSearchParams(location.search).get('intro') === '1';
+          var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (location.pathname === '/' && !calm && (force || !sessionStorage.getItem('intro'))) root.classList.add('intro-on');
+          else sessionStorage.setItem('intro', '1');
+        } catch (e) {}
       })();
     </script>
     <ClientRouter />
@@ -46,6 +54,7 @@ const fullTitle = title ? `${title} · ${SITE.title}` : SITE.title;
       <div class="blob blob-c" style="width:26rem;height:26rem;left:38%;top:68%"></div>
     </div>
     <div id="read-progress" aria-hidden="true"></div>
+    {Astro.url.pathname === '/' && <Intro />}
     <Header />
     <Banner size={banner} title={bannerTitle} sub={bannerSub} vt={vt} />
     <main class="flex-1"><slot /></main>

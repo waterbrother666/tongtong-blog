@@ -28,6 +28,10 @@ const fullTitle = title ? `${title} · ${SITE.title}` : SITE.title;
             var dark = t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
             root.classList.toggle('dark', dark);
           } catch (e) {}
+          // 配色跟着访问时间走;加 ?time=dawn|day|dusk|night 可以预览
+          var q = new URLSearchParams(location.search).get('time');
+          var h = new Date().getHours();
+          root.dataset.time = /^(dawn|day|dusk|night)$/.test(q || '') ? q : h >= 5 && h < 9 ? 'dawn' : h >= 9 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night';
         }
         apply();
         document.addEventListener('astro:after-swap', apply);
@@ -37,9 +41,9 @@ const fullTitle = title ? `${title} · ${SITE.title}` : SITE.title;
   </head>
   <body class="flex min-h-screen flex-col">
     <div class="blobs" transition:persist="blobs" aria-hidden="true">
-      <div class="blob blob-a" style="width:34rem;height:34rem;left:-10rem;top:6%;background:var(--violet)"></div>
-      <div class="blob blob-b" style="width:30rem;height:30rem;right:-8rem;top:45%;background:var(--cyan)"></div>
-      <div class="blob blob-c" style="width:26rem;height:26rem;left:38%;top:68%;background:linear-gradient(135deg,var(--violet),var(--cyan))"></div>
+      <div class="blob blob-a" style="width:34rem;height:34rem;left:-10rem;top:6%"></div>
+      <div class="blob blob-b" style="width:30rem;height:30rem;right:-8rem;top:45%"></div>
+      <div class="blob blob-c" style="width:26rem;height:26rem;left:38%;top:68%"></div>
     </div>
     <div id="read-progress" aria-hidden="true"></div>
     <Header />
@@ -47,7 +51,7 @@ const fullTitle = title ? `${title} · ${SITE.title}` : SITE.title;
     <main class="flex-1"><slot /></main>
     <Footer />
     <button id="to-top" type="button" class="glass" aria-label="回到顶部">
-      <svg class="ring" viewBox="0 0 46 46" aria-hidden="true"><defs><linearGradient id="to-top-grad"><stop offset="0" stop-color="var(--violet)"/><stop offset="1" stop-color="var(--cyan)"/></linearGradient></defs><circle cx="23" cy="23" r="20"/></svg>
+      <svg class="top-ring" viewBox="0 0 46 46" aria-hidden="true"><defs><linearGradient id="to-top-grad"><stop offset="0" stop-color="var(--violet)"/><stop offset="1" stop-color="var(--cyan)"/></linearGradient></defs><circle cx="23" cy="23" r="20"/></svg>
       <svg class="arrow h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
     </button>
     <script>import '../scripts/fx';</script>

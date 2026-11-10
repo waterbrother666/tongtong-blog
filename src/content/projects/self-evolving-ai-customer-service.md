@@ -5,6 +5,8 @@ tags: [FastAPI, Agent Loop, RAG, pgvector, React]
 cover: /projects/self-evolving-ai-customer-service/buyer-consultation.png
 order: 3
 private: true
+status: 全链路本地可跑
+highlight: 答案只来自可核验的商品事实,答不了就请买家转人工。
 ---
 ## 项目简介
 

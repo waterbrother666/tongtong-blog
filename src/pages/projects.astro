@@ -8,6 +8,22 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
 ---
 <Shell title="项目" bannerTitle="项目" bannerSub="做过的 AI 应用与自动化项目" sidebar={false}>
   <ProjectDeck>
-    {projects.map((p, i) => <div class="dcard"><Card vt={vtName('project', p.id)} title={p.data.title} description={p.data.description} tags={p.data.tags} cover={p.data.cover} href={`/projects/${p.id}`} badge={p.data.private ? '私有项目' : '开源'} delay={i * 80} /></div>)}
+    {projects.map((p, i) => (
+      <div class="dcard">
+        <div class="flip">
+          <div class="flip-front"><Card vt={vtName('project', p.id)} title={p.data.title} description={p.data.description} tags={p.data.tags} cover={p.data.cover} href={`/projects/${p.id}`} badge={p.data.private ? '私有项目' : '开源'} delay={i * 80} /></div>
+          <div class="flip-back glass">
+            <p class="font-mono text-xs" style="color:var(--muted)">NO.{String(i + 1).padStart(2, '0')} · {p.data.private ? '私有项目' : '开源'}</p>
+            <h3 class="mt-2 text-lg font-bold">{p.data.title}</h3>
+            {p.data.status && <p class="mt-3 flex items-center gap-2 text-sm"><span class="h-2 w-2 shrink-0 rounded-full" style="background:var(--cyan);box-shadow:0 0 10px var(--cyan)"></span>{p.data.status}</p>}
+            {p.data.highlight && <p class="mt-4 border-l-2 pl-3 text-sm leading-relaxed" style="border-color:var(--violet)">{p.data.highlight}</p>}
+            <p class="mt-5 text-xs font-semibold" style="color:var(--muted)">技术栈</p>
+            <div class="mt-2 flex flex-wrap gap-1.5">{p.data.tags.map((t, k) => <span class:list={['chip', k % 2 && 'chip-cyan']}>{t}</span>)}</div>
+            <a href={`/projects/${p.id}`} class="btn mt-auto inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white" style="background:linear-gradient(90deg,var(--violet),var(--cyan))">查看详情 →</a>
+          </div>
+        </div>
+        <button type="button" class="flip-btn" aria-label="翻面" title="翻面"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/></svg></button>
+      </div>
+    ))}
   </ProjectDeck>
 </Shell>

@@ -93,6 +93,9 @@ function onScroll() {
   }
 
   tocUpdate?.();
+  ambUpdate?.();
+  storyUpdate?.();
+  flowUpdate();
 
   document.querySelectorAll<HTMLElement>('.timeline').forEach((el) => {
     const r = el.getBoundingClientRect();
@@ -183,8 +186,10 @@ addEventListener('touchmove', () => closeZoom(), { passive: true });
 document.addEventListener('click', (e) => {
   const t = e.target as HTMLElement;
   if (zoom) { e.preventDefault(); closeZoom(); return; }
-  const img = t.closest?.('.prose img') as HTMLImageElement | null;
+  const img = t.closest?.('.prose img, .story-frame img') as HTMLImageElement | null;
   if (img && !img.closest('a')) { openZoom(img); return; }
+  const flow = t.closest?.('.flow-svg') as SVGSVGElement | null;
+  if (flow) { pickStep(flow, t.closest('[data-step]')); return; }
   const anchor = t.closest?.('.h-anchor') as HTMLAnchorElement | null;
   if (anchor) { navigator.clipboard?.writeText(anchor.href).then(() => toast('本节链接已复制'), () => {}); return; }
   if (t.closest?.('#to-top')) scrollTo({ top: 0, behavior: calm ? 'auto' : 'smooth' });
@@ -207,6 +212,147 @@ document.addEventListener('pointerover', (e) => {
   tip.style.top = r.top + scrollY - tip.offsetHeight - 8 + 'px';
 });
 
+// ───────── 章节氛围色:文章滚到不同章节,背景光斑换一种颜色 ─────────
+let ambUpdate: (() => void) | null = null;
+function initAmbient() {
+  ambUpdate = null;
+  const blobs = document.querySelector<HTMLElement>('.blobs');
+  if (!blobs) return;
+  const prose = document.querySelector<HTMLElement>('article .prose');
+  if (!prose || calm) { blobs.style.removeProperty('--amb-a'); blobs.style.removeProperty('--amb-b'); return; }
+  // 每篇文章按地址算出自己的主色,章节在主色上依次偏移
+  let h = 0;
+  for (const c of location.pathname) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const base = h % 360;
+  const heads = [...prose.querySelectorAll<HTMLElement>('h2')];
+  let cur = -2;
+  ambUpdate = () => {
+    let i = -1;
+    heads.forEach((el, k) => { if (el.getBoundingClientRect().top < innerHeight * 0.5) i = k; });
+    if (i === cur) return;
+    cur = i;
+    const hue = (base + (i + 1) * 47) % 360;
+    blobs.style.setProperty('--amb-a', `hsl(${hue} 82% 62%)`);
+    blobs.style.setProperty('--amb-b', `hsl(${(hue + 62) % 360} 82% 58%)`);
+  };
+}
+
+// ───────── 项目详情滚动叙事:左边舞台固定,文字滚到哪张图,舞台就换哪张 ─────────
+let storyUpdate: (() => void) | null = null;
+function initStory() {
+  storyUpdate = null;
+  const root = document.querySelector<HTMLElement>('[data-story]');
+  if (!root) return;
+  const frames = root.querySelector<HTMLElement>('.story-frames')!;
+  if (!root.dataset.built) {
+    const imgs = [...root.querySelectorAll<HTMLImageElement>('article .prose img')];
+    if (imgs.length < 2) return;
+    root.dataset.built = '1';
+    imgs.forEach((img, i) => {
+      const fig = document.createElement('figure');
+      fig.className = 'story-frame';
+      const clone = img.cloneNode() as HTMLImageElement;
+      clone.removeAttribute('loading');
+      const cap = document.createElement('figcaption');
+      cap.textContent = img.alt;
+      fig.append(clone, cap);
+      frames.append(fig);
+      const mark = document.createElement('div');
+      mark.className = 'story-mark';
+      const b = document.createElement('b'); b.textContent = `图 ${i + 1}`;
+      const t = document.createElement('span'); t.textContent = img.alt;
+      mark.append(b, t);
+      const src = (img.closest('p') ?? img) as HTMLElement;
+      src.classList.add('story-src');
+      src.before(mark);
+    });
+    root.classList.add('story-ready');
+  }
+  const figs = [...frames.children] as HTMLElement[];
+  const marks = [...root.querySelectorAll<HTMLElement>('.story-mark')];
+  const num = root.querySelector<HTMLElement>('.story-num')!;
+  const bar = root.querySelector<HTMLElement>('.story-bar')!;
+  let cur = -1;
+  storyUpdate = () => {
+    let idx = 0;
+    marks.forEach((m, i) => { if (m.getBoundingClientRect().top < innerHeight * 0.55) idx = i; });
+    if (idx === cur) return;
+    cur = idx;
+    figs.forEach((f, i) => { f.classList.toggle('on', i === idx); f.classList.toggle('past', i < idx); });
+    marks.forEach((m, i) => m.classList.toggle('on', i === idx));
+    num.textContent = `${String(idx + 1).padStart(2, '0')} / ${String(figs.length).padStart(2, '0')}`;
+    bar.style.setProperty('--sp', String((idx + 1) / figs.length));
+  };
+}
+
+// ───────── 流程图逐步点亮:把带 data-step 的 SVG 内联进来,随滚动一步步亮起 ─────────
+async function initFlow() {
+  if (calm) return;
+  const imgs = document.querySelectorAll<HTMLImageElement>('article .prose img[src$=".svg"], .story-frame img[src$=".svg"]');
+  for (const img of imgs) {
+    try {
+      const text = await (await fetch(img.src)).text();
+      if (!text.includes('data-step') || !img.isConnected) continue;
+      const svg = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement as unknown as SVGSVGElement;
+      if (svg.nodeName !== 'svg') continue;
+      svg.classList.add('flow-svg');
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', img.alt);
+      svg.querySelectorAll('[data-arrow]').forEach((a) => a.setAttribute('pathLength', '100'));
+      const cap = document.createElement('p');
+      cap.className = 'flow-cap';
+      cap.textContent = '往下滚动,流程会一步步亮起;点任意一步可以单独看。';
+      const inStage = img.closest('.story-frame');
+      if (inStage) inStage.querySelector('figcaption')?.replaceWith(cap);
+      img.replaceWith(svg);
+      if (!inStage) svg.after(cap);
+    } catch { /* 取不到就保留原图 */ }
+  }
+  flowUpdate();
+}
+function flowUpdate() {
+  document.querySelectorAll<SVGSVGElement>('.flow-svg').forEach((svg) => {
+    const steps = svg.querySelectorAll('[data-step]');
+    let p: number;
+    const frame = svg.closest('.story-frame');
+    if (frame) {
+      // 舞台里的流程图:按读者在这一段文字里滚了多远来点亮
+      const marks = [...document.querySelectorAll<HTMLElement>('.story-mark')];
+      const i = [...frame.parentElement!.children].indexOf(frame);
+      const top = marks[i]?.getBoundingClientRect().top ?? 0;
+      const next = marks[i + 1]?.getBoundingClientRect().top ?? top + innerHeight;
+      p = clamp(((innerHeight * 0.55 - top) / Math.max(1, next - top)) * 1.5);
+    } else {
+      const r = svg.getBoundingClientRect();
+      p = clamp((innerHeight * 0.92 - r.top) / (innerHeight * 0.7));
+    }
+    if (document.documentElement.scrollHeight - innerHeight - scrollY < 4) p = 1;
+    const n = Math.round(p * steps.length);
+    steps.forEach((s) => s.classList.toggle('lit', Number((s as HTMLElement).dataset.step) <= n));
+    svg.querySelectorAll<HTMLElement>('[data-arrow]').forEach((a) => a.classList.toggle('lit', Number(a.dataset.arrow) + 1 <= n));
+  });
+}
+function pickStep(svg: SVGSVGElement, step: Element | null) {
+  const cap = (svg.closest('.story-frame')?.querySelector('.flow-cap') ?? svg.nextElementSibling) as HTMLElement | null;
+  const same = step?.classList.contains('pick');
+  svg.querySelectorAll('.pick').forEach((s) => s.classList.remove('pick'));
+  if (!step || same || !step.classList.contains('lit')) {
+    svg.classList.remove('focus');
+    if (cap?.classList.contains('flow-cap')) cap.textContent = '往下滚动,流程会一步步亮起;点任意一步可以单独看。';
+    return;
+  }
+  step.classList.add('pick');
+  svg.classList.add('focus');
+  if (!cap?.classList.contains('flow-cap')) return;
+  const texts = [...step.querySelectorAll('text')];
+  const title = texts[0]?.textContent ?? '';
+  const chip = texts.find((t) => t.getAttribute('text-anchor') === 'middle');
+  const body = texts.slice(1).filter((t) => t !== chip).map((t) => t.textContent).join('');
+  cap.replaceChildren();
+  const b = document.createElement('b'); b.textContent = title;
+  cap.append(b, `:${body}${chip ? `(${chip.textContent})` : ''}`);
+}
+
 // ───────── 卡片到详情的共享转场 ─────────
 // 元素用 data-vt 标出名字;只给「点的那一个」和新页面里对得上的那个起名,其余照常淡入淡出。
 type VT = HTMLElement & { style: CSSStyleDeclaration & { viewTransitionName: string; viewTransitionClass: string } };
@@ -220,7 +366,10 @@ const clearNames = () => document.querySelectorAll<VT>('[data-vt]').forEach((el)
 function tagCover() {
   const art = document.querySelector<HTMLElement>('[data-cover-vt]');
   if (!art) return;
-  const img = [...art.querySelectorAll<HTMLImageElement>('.prose img')].find((i) => i.getAttribute('src') === art.dataset.coverSrc);
+  document.querySelectorAll<HTMLElement>('img[data-vt]').forEach((i) => { delete i.dataset.vt; delete i.dataset.vtAlways; });
+  const story = matchMedia('(min-width: 1024px)').matches && document.querySelector('.story-ready');
+  const pool = document.querySelectorAll<HTMLImageElement>(story ? '.story-frame img' : 'article .prose img');
+  const img = [...pool].find((i) => i.getAttribute('src') === art.dataset.coverSrc);
   if (img) { img.dataset.vt = art.dataset.coverVt; img.dataset.vtAlways = ''; }
 }
 let oldNames = new Set<string>();
@@ -234,6 +383,8 @@ document.addEventListener('astro:before-preparation', (e: any) => {
   for (const el of els) { if (oldNames.has(el.dataset.vt!)) continue; nameEl(el); oldNames.add(el.dataset.vt!); }
 });
 document.addEventListener('astro:after-swap', () => {
+  initStory();
+  storyUpdate?.();
   tagCover();
   const used = new Set<string>();
   document.querySelectorAll<VT>('[data-vt]').forEach((el) => {
@@ -247,6 +398,9 @@ document.addEventListener('astro:after-swap', () => {
 });
 
 document.addEventListener('astro:page-load', () => {
+  initStory();
+  initFlow();
+  initAmbient();
   tagCover();
   initReveal();
   initToc();

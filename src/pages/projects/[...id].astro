@@ -11,7 +11,8 @@ const { Content, headings } = await render(project);
 const toc = headings.filter((h) => h.depth === 2);
 ---
 <Shell title={project.data.title} description={project.data.description} bannerTitle={project.data.title} vt={vtName('title-project', project.id)} sidebar={false}>
-  <div class="lg:grid lg:grid-cols-[1fr_15rem] lg:gap-6">
+  <div class="lg:grid lg:grid-cols-[1fr_15rem] lg:gap-6" data-story>
+    <div class="story-stage glass"><div class="story-frames"></div><div class="story-count"><span class="story-num"></span><span class="story-bar"><i></i></span></div></div>
     <article class="min-w-0" data-cover-vt={project.data.cover && vtName('cover-project', project.id)} data-cover-src={project.data.cover}>
       <div class="glass p-6 md:p-10">
         <div class="mb-6 flex flex-wrap items-center gap-2">

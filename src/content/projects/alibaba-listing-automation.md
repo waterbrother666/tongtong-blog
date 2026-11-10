@@ -5,6 +5,8 @@ tags: [Python, 桌面客户端, Chrome 扩展, 网页自动化]
 cover: /projects/alibaba-listing-automation/client-publish.png
 order: 2
 private: true
+status: 已交付,进入维护
+highlight: 现在一天可以发 400 到 500 个品,发一条确认一条,不会重复发。
 ---
 ## 项目简介
 

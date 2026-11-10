@@ -23,6 +23,8 @@ const projects = defineCollection({
     cover: z.string().optional(), // 封面截图,放在 public/ 下,如 /projects/xxx/cover.png
     order: z.number().default(99),
     private: z.boolean().default(false),
+    status: z.string().optional(), // 卡牌背面:项目状态
+    highlight: z.string().optional(), // 卡牌背面:一句话亮点
   }),
 });
 

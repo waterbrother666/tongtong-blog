@@ -147,14 +147,20 @@
     };
     const close = () => {
       if (deck.classList.contains('collapsed')) return;
+      cards.forEach((c) => c.classList.remove('flipped'));
       grid.style.height = `${grid.offsetHeight}px`;
       deck.classList.add('collapsed');
       requestAnimationFrame(layout);
     };
 
     cards.forEach((c) => c.addEventListener('click', (e) => {
-      if (deck.classList.contains('collapsed')) { e.preventDefault(); setActive(-1); open(); }
+      if (deck.classList.contains('collapsed')) { e.preventDefault(); e.stopPropagation(); setActive(-1); open(); }
     }, true));
+    // 翻面:只在展开后可用
+    grid.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('.flip-btn');
+      if (b && !deck.classList.contains('collapsed')) b.closest('.dcard')!.classList.toggle('flipped');
+    });
     deck.querySelector('[data-deck-hint]')!.addEventListener('click', open);
     // 点空白处收回
     document.addEventListener('click', (e) => {

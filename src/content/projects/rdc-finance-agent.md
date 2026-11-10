@@ -5,6 +5,8 @@ tags: [React, FastAPI, Playwright, VLM, PostgreSQL, Celery]
 cover: /projects/rdc-finance-agent/workbench.png
 order: 1
 private: true
+status: 主流程已跑通,审核效果优化中
+highlight: 初审通过后还要再过一次反向复核,两次都通过才给「通过」。
 ---
 ## 项目简介
 

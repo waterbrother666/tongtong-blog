@@ -2,12 +2,13 @@
 import Shell from '../../layouts/Shell.astro';
 import Card from '../../components/Card.astro';
 import { getSeries } from '../../lib/tutorials';
+import { vtName } from '../../lib/vt';
 const series = await getSeries();
 ---
 <Shell title="教程" bannerTitle="教程" bannerSub={series.length ? `共 ${series.length} 个系列,按章节顺序阅读` : '还没有教程'} sidebar={false}>
   {series.length ? (
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {series.map((s, i) => <Card cover={s.cover} title={s.title} description={s.description} tags={s.tags} href={`/tutorials/${s.series}`} badge={`${s.chapters.length} 章`} delay={i * 80} />)}
+      {series.map((s, i) => <Card vt={vtName('series', s.series)} cover={s.cover} title={s.title} description={s.description} tags={s.tags} href={`/tutorials/${s.series}`} badge={`${s.chapters.length} 章`} delay={i * 80} />)}
     </div>
   ) : (
     <div class="glass p-10 text-center" style="color:var(--muted)">还没有教程。在 <code>src/content/tutorials/</code> 下新建系列文件夹即可。</div>

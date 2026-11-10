@@ -7,6 +7,6 @@ posts.forEach((p) => p.data.tags.forEach((t) => counts.set(t, (counts.get(t) ?? 
 ---
 <Shell title="标签" bannerTitle="标签" bannerSub={`共 ${counts.size} 个`}>
   <div class="reveal"><div class="glass flex flex-wrap gap-3 p-6 md:p-8">
-    {[...counts].sort().map(([t, n], i) => <a href={`/tags/${t}`} class:list={['chip px-4 py-2 text-sm transition hover:scale-105', i % 2 && 'chip-cyan']}>#{t} <span class="ml-1 opacity-60">{n}</span></a>)}
+    {[...counts].sort().map(([t, n], i) => <a href={`/tags/${t}`} class:list={['chip px-4 py-2 text-sm', i % 2 && 'chip-cyan']}>#{t} <span class="ml-1 opacity-60">{n}</span></a>)}
   </div></div>
 </Shell>

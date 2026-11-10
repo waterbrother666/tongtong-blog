@@ -4,6 +4,7 @@ import Shell from '../../../layouts/Shell.astro';
 import Giscus from '../../../components/Giscus.astro';
 import { getSeries, chapterSlug } from '../../../lib/tutorials';
 import { fmtDate, readInfo } from '../../../lib/cover';
+import { vtName } from '../../../lib/vt';
 export async function getStaticPaths() {
   const all = await getSeries();
   return all.flatMap((s) =>
@@ -19,7 +20,7 @@ const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
 const { chars, min } = readInfo(chapter.body);
 const url = (c: typeof chapter) => `/tutorials/${s.series}/${chapterSlug(c)}`;
 ---
-<Shell title={`${chapter.data.title} · ${s.title}`} description={chapter.data.description} bannerTitle={chapter.data.title} bannerSub={`${s.title} · 第 ${chapter.data.order} 章 · ${fmtDate(chapter.data.date)} · ${chars} 字 · 约 ${min} 分钟`} sidebar={false}>
+<Shell title={`${chapter.data.title} · ${s.title}`} description={chapter.data.description} bannerTitle={chapter.data.title} bannerSub={`${s.title} · 第 ${chapter.data.order} 章 · ${fmtDate(chapter.data.date)} · ${chars} 字 · 约 ${min} 分钟`} vt={vtName('title-chapter', chapter.id)} sidebar={false}>
   <div class="lg:grid lg:grid-cols-[1fr_16rem] lg:gap-6">
     <article class="min-w-0">
       <div class="glass p-6 md:p-10">

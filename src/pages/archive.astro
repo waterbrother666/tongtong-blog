@@ -1,18 +1,25 @@
 ---
 import { getCollection } from 'astro:content';
 import Shell from '../layouts/Shell.astro';
+import Heatmap from '../components/Heatmap.astro';
 import { fmtDate } from '../lib/cover';
+import { vtName } from '../lib/vt';
+import { getSeries, chapterSlug } from '../lib/tutorials';
 const posts = (await getCollection('posts', (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
 const byYear = new Map<number, typeof posts>();
 for (const p of posts) { const y = p.data.date.getFullYear(); byYear.set(y, [...(byYear.get(y) ?? []), p]); }
+// 热力图把文章和教程章节都算进去
+const chapters = (await getSeries()).flatMap((s) => s.chapters.map((c) => ({ date: c.data.date, title: `教程 · ${c.data.title}`, href: `/tutorials/${s.series}/${chapterSlug(c)}` })));
+const activity = [...posts.map((p) => ({ date: p.data.date, title: p.data.title, href: `/blog/${p.id}` })), ...chapters];
 ---
 <Shell title="归档" bannerTitle="归档" bannerSub={`共 ${posts.length} 篇`}>
-  <div class="reveal"><div class="glass p-6 md:p-8">
+  <div class="reveal mb-6"><div class="glass p-6 md:p-8"><Heatmap items={activity} /></div></div>
+  <div class="reveal" style="--d:120ms"><div class="glass p-6 md:p-8">
     {[...byYear].map(([y, list]) => (
       <section class="mb-8 last:mb-0">
-        <h2 class="grad-text mb-4 text-2xl font-extrabold">{y}</h2>
-        <ul class="space-y-3 border-l-2 pl-5" style="border-color:color-mix(in srgb,var(--violet) 40%,transparent)">
-          {list.map((p) => <li class="flex gap-4"><time class="w-24 shrink-0 font-mono text-sm" style="color:var(--muted)">{fmtDate(p.data.date)}</time><a href={`/blog/${p.id}`} class="transition hover:text-[var(--violet)]">{p.data.title}</a></li>)}
+        <h2 class="grad-text mb-4 w-fit text-2xl font-extrabold">{y}</h2>
+        <ul class="timeline space-y-4 pl-6">
+          {list.map((p, i) => <li class="tl-item reveal flex gap-4" style={`--d:${200 + i * 90}ms`}><time class="w-24 shrink-0 font-mono text-sm" style="color:var(--muted)">{fmtDate(p.data.date)}</time><a href={`/blog/${p.id}`} class="transition hover:text-[var(--violet)]" data-vt={vtName('title-post', p.id)}>{p.data.title}</a></li>)}
         </ul>
       </section>
     ))}

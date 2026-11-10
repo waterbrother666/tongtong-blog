@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Shell from '../../layouts/Shell.astro';
+import { vtName } from '../../lib/vt';
 export async function getStaticPaths() {
   const projects = await getCollection('projects');
   return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
@@ -9,16 +10,16 @@ const { project } = Astro.props;
 const { Content, headings } = await render(project);
 const toc = headings.filter((h) => h.depth === 2);
 ---
-<Shell title={project.data.title} description={project.data.description} bannerTitle={project.data.title} sidebar={false}>
+<Shell title={project.data.title} description={project.data.description} bannerTitle={project.data.title} vt={vtName('title-project', project.id)} sidebar={false}>
   <div class="lg:grid lg:grid-cols-[1fr_15rem] lg:gap-6">
-    <article class="min-w-0">
+    <article class="min-w-0" data-cover-vt={project.data.cover && vtName('cover-project', project.id)} data-cover-src={project.data.cover}>
       <div class="glass p-6 md:p-10">
         <div class="mb-6 flex flex-wrap items-center gap-2">
           <a href="/projects" class="text-sm" style="color:var(--muted)">← 返回项目</a>
           {project.data.tags.map((t, i) => <span class:list={['chip', i % 2 && 'chip-cyan']}>{t}</span>)}
         </div>
         {project.data.repo && (
-          <a href={project.data.repo} target="_blank" rel="noopener" class="mb-6 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white" style="background:linear-gradient(90deg,var(--violet),var(--cyan))">查看源码 ↗</a>
+          <a href={project.data.repo} target="_blank" rel="noopener" class="btn mb-6 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white" style="background:linear-gradient(90deg,var(--violet),var(--cyan))">查看源码 ↗</a>
         )}
         <div class="prose max-w-none dark:prose-invert prose-headings:scroll-mt-24"><Content /></div>
       </div>

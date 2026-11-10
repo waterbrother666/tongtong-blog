@@ -174,5 +174,6 @@
   }
   const init = () => document.querySelectorAll<HTMLElement>('[data-deck]').forEach(setup);
   document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:after-swap', init);
   init();
 </script>

@@ -4,9 +4,9 @@ import { avatar } from '../lib/avatar';
 const path = Astro.url.pathname;
 const active = (href: string) => href === '/' ? path === '/' : path.startsWith(href);
 ---
-<header class="fixed inset-x-0 top-3 z-50 px-3">
+<header class="site-header fixed inset-x-0 top-3 z-50 px-3">
   <div class="glass mx-auto max-w-6xl" style="background:var(--glass-strong)">
-    <div class="flex h-14 items-center justify-between px-4">
+    <div class="hbar flex items-center justify-between px-4">
       <a href="/" class="flex items-center gap-2 font-bold tracking-tight">
         {avatar
           ? <img src={`/${avatar}`} alt={SITE.author} class="h-8 w-8 rounded-full object-cover ring-2 ring-[var(--violet)]/60" />
@@ -16,7 +16,7 @@ const active = (href: string) => href === '/' ? path === '/' : path.startsWith(h
       <div class="flex items-center gap-1">
         <nav class="hidden items-center gap-1 sm:flex">
           {NAV.map((n) => (
-            <a href={n.href} class:list={['rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/10', active(n.href) && 'text-[var(--violet)]']}>{n.label}</a>
+            <a href={n.href} class:list={['nav-link relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', active(n.href) ? 'text-[var(--violet)]' : 'hover:bg-black/5 dark:hover:bg-white/10']}>{active(n.href) && <span class="nav-pill"></span>}<span class="relative">{n.label}</span></a>
           ))}
         </nav>
         <button id="theme-toggle" aria-label="切换深浅色" class="grid h-9 w-9 place-items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10">

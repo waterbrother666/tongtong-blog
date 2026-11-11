@@ -284,7 +284,9 @@ a.chip:hover { translate: 0 -3px; background: color-mix(in srgb, currentColor 24
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 52%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0%, #000 52%, transparent 100%);
 }
-.hero-fx { position: absolute; inset: 0; width: 100%; height: 100%; transform: translate3d(0, var(--hy, 0px), 0); }
+.hero-fx { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-gl { position: absolute; inset: -5%; width: 110%; height: 110%; opacity: 0; transition: opacity 1.6s ease; transform: translate3d(0, var(--hy, 0px), 0); }
+.hero-gl.ready { opacity: 1; }
 /* 左侧压暗,保证大标题清晰 */
 .hero-wall-shade { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--bg) 78%, transparent) 0%, color-mix(in srgb, var(--bg) 30%, transparent) 38%, transparent 62%); }
 /* 浅色主题:壁纸淡一些,像蒙了一层白雾 */

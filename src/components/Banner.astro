@@ -5,10 +5,16 @@ const { size = 'slim', title, sub, vt } = Astro.props;
 const hero = [...'通通的小站'];
 ---
 {size === 'full' ? (
-  <section class="mx-auto w-full max-w-6xl px-5 pb-10 pt-36 md:pt-44">
-    <h1 class="text-5xl font-extrabold leading-tight md:text-7xl" aria-label="通通的小站">{hero.map((c, i) => <span class="hero-char" style={`--i:${i}`} aria-hidden="true">{c}</span>)}</h1>
+  <>
+  <div class="hero-wall" aria-hidden="true">
+    <canvas class="hero-fx"></canvas>
+    <div class="hero-wall-shade"></div>
+  </div>
+  <section class="hero-copy mx-auto w-full max-w-6xl px-5 pb-10 pt-36 md:pt-44">
+    <h1 class="text-5xl font-extrabold leading-tight md:text-7xl" aria-label="通通的小站">{hero.map((c, i) => <span class="hero-cell" aria-hidden="true"><span class="hero-char" style={`--i:${i}`}>{c}</span></span>)}</h1>
     <p class="hero-sub mt-4 text-lg" style="color:var(--muted)">把做过的事情写下来</p>
   </section>
+  </>
 ) : title ? (
   <section class="mx-auto w-full max-w-6xl px-5 pb-8 pt-32 md:pt-36">
     <h1 class="w-fit text-3xl font-extrabold md:text-4xl" data-vt={vt} data-vt-always={vt ? '' : undefined}>{title}</h1>

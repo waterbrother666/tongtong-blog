@@ -15,7 +15,7 @@ import { SITE } from '../config';
   /* 主页大标题的入场动画等进入之后再播 */
   .intro-on .hero-char, .intro-on .hero-sub { animation-play-state: paused; }
   #intro .intro-bg {
-    position: absolute; inset: 0; transition: opacity 0.9s ease;
+    position: absolute; inset: 0; transition: opacity 0.65s ease;
     background:
       radial-gradient(70rem 34rem at 78% -6%, color-mix(in srgb, var(--violet) 34%, transparent), transparent 70%),
       radial-gradient(60rem 30rem at 8% 2%, color-mix(in srgb, var(--cyan) 26%, transparent), transparent 70%),
@@ -136,13 +136,13 @@ import { SITE } from '../config';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       ctx.globalCompositeOperation = dark ? 'lighter' : 'source-over';
-      ctx.globalAlpha = (leaving ? Math.max(0, 1 - (now - leaving) / 900) : 1) * (dark ? 0.95 : 1);
+      ctx.globalAlpha = (leaving ? Math.max(0, 1 - (now - leaving) / 650) : 1) * (dark ? 0.95 : 1);
       for (const p of parts) {
         ctx.fillStyle = p.c;
         const s = p.s * (1 + p.t * 0.6);
         ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
       }
-      if (leaving && now - leaving > 1000) finish();
+      if (leaving && now - leaving > 800) finish();
     }
 
     function enter() {
@@ -155,6 +155,10 @@ import { SITE } from '../config';
         p.vx += (dx / d) * v + (Math.random() - 0.5) * 6;
         p.vy += (dy / d) * v + (Math.random() - 0.5) * 6;
       }
+      // 把炸开的粒子交给首页的光带:它们从同样的位置、带着同样的速度出发,再汇进光带
+      const data = new Float32Array(parts.length * 4);
+      parts.forEach((p, i) => { data[i * 4] = p.x; data[i * 4 + 1] = p.y; data[i * 4 + 2] = p.vx; data[i * 4 + 3] = p.vy; });
+      dispatchEvent(new CustomEvent('intro:burst', { detail: { n: parts.length, data } }));
       root.classList.add('leaving');
       // 主页露出来的同时,开始播大标题的入场动画
       document.documentElement.classList.remove('intro-on');

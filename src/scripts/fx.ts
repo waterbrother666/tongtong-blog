@@ -60,6 +60,9 @@ if (!calm) {
     const b = document.querySelector<HTMLElement>('.blobs');
     b?.style.setProperty('--px', cx.toFixed(4));
     b?.style.setProperty('--py', cy.toFixed(4));
+    const hw = document.querySelector<HTMLElement>('.hero-wall');
+    hw?.style.setProperty('--px', cx.toFixed(4));
+    hw?.style.setProperty('--py', cy.toFixed(4));
     raf = Math.abs(tx - cx) + Math.abs(ty - cy) > 0.002 ? requestAnimationFrame(tick) : 0;
   };
   addEventListener('pointermove', (e) => {
@@ -74,6 +77,11 @@ function onScroll() {
   const y = scrollY;
   const max = document.documentElement.scrollHeight - innerHeight;
   document.querySelector('.site-header')?.classList.toggle('scrolled', y > 24);
+  const hw = document.querySelector<HTMLElement>('.hero-wall');
+  if (hw) {
+    hw.style.setProperty('--hs', (calm ? 0 : clamp(y / (hw.offsetHeight * 0.75))).toFixed(3));
+    hw.style.setProperty('--hy', calm ? '0px' : `${(y * 0.22).toFixed(1)}px`);
+  }
 
   const bar = document.getElementById('read-progress');
   const art = document.querySelector<HTMLElement>('article');
@@ -353,6 +361,246 @@ function pickStep(svg: SVGSVGElement, step: Element | null) {
   cap.append(b, `:${body}${chip ? `(${chip.textContent})` : ''}`);
 }
 
+// ───────── 首页顶部壁纸:和开场同一套粒子——小方块拼成流动的光带,鼠标像风一样吹散 ─────────
+const PALETTES: Record<string, string[]> = {
+  night: ['#8ea2ff', '#5fd4e8', '#a994ff'],
+  day: ['#a994ff', '#6beaff', '#8ea2ff'],
+  dawn: ['#ff9db5', '#ffc46b', '#a994ff'],
+  dusk: ['#c9a0ff', '#ff9d66', '#ff7ac8'],
+};
+const hexRgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const smooth = (a: number, b: number, x: number) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+
+// 光带:6 条带子沿 S 形曲线从左下爬向右上,宽度忽粗忽细
+function ribbon(k: number, u: number, t: number) {
+  const c = 0.2 + 0.56 * u + 0.085 * Math.sin(u * 6 + t * 0.32 + k * 1.7) + 0.04 * Math.sin(u * 13 - t * 0.47 + k * 2.3) + (k - 2.5) * 0.034;
+  const s = 0.5 + 0.5 * Math.sin(u * 7 + k * 2 - t * 0.38);
+  return { c, hw: 0.009 + 0.032 * s * s };
+}
+
+type HP = { rs: number; dr: number; kind: number; k: number; u: number; v: number; s: number; ph: number; sp: number; x: number; y: number; vx: number; vy: number; t: number; al: number; edge: number; hx: number; hy: number };
+let heroStop: (() => void) | null = null;
+function initHero() {
+  heroStop?.(); heroStop = null;
+  const wall = document.querySelector<HTMLElement>('.hero-wall');
+  if (!wall) return;
+  const cv = wall.querySelector<HTMLCanvasElement>('.hero-fx')!;
+  const ctx = cv.getContext('2d')!;
+  const dark = () => document.documentElement.classList.contains('dark');
+  let W = 0, H = 0, dpr = 1, raf = 0, visible = true;
+
+  // 颜色:每个时段一组,16 档渐变 + 16 档点缀色,预先算好
+  let ramp: string[] = [];
+  const buildRamp = () => {
+    const pal = (PALETTES[document.documentElement.dataset.time || 'night'] || PALETTES.night).map(hexRgb);
+    const mix = (a: number[], b: number[], k: number) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(',')})`;
+    ramp = [];
+    for (let i = 0; i < 16; i++) ramp.push(mix(pal[0], pal[1], i / 15));
+    for (let i = 0; i < 16; i++) ramp.push(mix(pal[2], pal[1], i / 15));
+  };
+
+  let parts: HP[] = [];
+  const build = () => {
+    dpr = Math.min(2, devicePixelRatio || 1);
+    W = wall.clientWidth; H = wall.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const n = W < 640 ? 3200 : 9000;
+    const old = parts;
+    parts = Array.from({ length: n }, (_, i) => {
+      const k = i % 6;
+      // 偏向右侧;左边留给标题
+      const u = 0.1 + 0.9 * Math.pow(Math.random(), 0.8);
+      // 三种粒子:最亮最细的光芯、两条亮边、带子里面淡淡的填充——这样才看得出一束一束的光
+      const r = Math.random();
+      const kind = r < 0.4 ? 0 : r < 0.72 ? 1 : 2;
+      const v = kind === 0 ? (Math.random() * 2 - 1) * 0.14 : kind === 1 ? (Math.random() < 0.5 ? -1 : 1) * (0.9 + Math.random() * 0.16) : (Math.random() * 2 - 1) * 0.85;
+      const prev = old[i];
+      return {
+        rs: 0.6 + Math.random() * 0.9, dr: 0.992 + Math.random() * 0.0055,
+        kind, k, u, v, s: (W < 640 ? 1.2 : 1.35) + Math.random() * (kind === 2 ? 0.9 : 1.2), ph: Math.random() * 6.28, sp: 0.6 + Math.random() * 1.4,
+        x: prev ? prev.x : Math.random() * W, y: prev ? prev.y : Math.random() * H, vx: 0, vy: 0, t: 0, al: 0, edge: kind === 1 ? 1 : 0, hx: 0, hy: 0,
+      };
+    });
+  };
+  const home = (p: HP, t: number) => {
+    const r = ribbon(p.k, p.u, t);
+    p.hx = p.u * W; p.hy = (1 - (r.c + p.v * r.hw)) * H;
+    // 亮边更亮;左边压暗
+    p.al = (p.kind === 0 ? 0.95 : p.kind === 1 ? 0.7 : 0.24) * (0.1 + 0.9 * smooth(0.06, 0.55, p.u));
+  };
+
+  // ── 鼠标:和开场同一套「风」,按住时聚拢,松手炸开 ──
+  const P = { cx: -1e4, cy: -1e4, sx: -1e4, sy: -1e4, strT: 0, str: 0, mvx: 0, mvy: 0, holdT: 0, hold: 0, blast: 0, bx: 0, by: 0, lx: 0, ly: 0 };
+  const cells = [...document.querySelectorAll<HTMLElement>('.hero-cell')];
+  const glow = cells.map(() => 0);
+  const inWall = (e: PointerEvent) => { const r = wall.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.top + r.height; };
+  const onMove = (e: PointerEvent) => {
+    if (e.pointerType === 'touch') return;
+    if (P.sx < -1e3) { P.sx = e.clientX; P.sy = e.clientY; P.lx = e.clientX; P.ly = e.clientY; }
+    P.mvx += (e.clientX - P.lx - P.mvx) * 0.5; P.mvy += (e.clientY - P.ly - P.mvy) * 0.5;
+    P.lx = e.clientX; P.ly = e.clientY; P.cx = e.clientX; P.cy = e.clientY;
+    P.strT = inWall(e) ? 1 : 0;
+  };
+  const onDown = (e: PointerEvent) => {
+    if (e.button !== 0 || e.pointerType === 'touch' || !inWall(e)) return;
+    if ((e.target as Element | null)?.closest?.('a, button, input, textarea, select, summary, label, [role="button"], .glass')) return;
+    P.holdT = 1;
+  };
+  const onUp = () => { if (P.hold > 0.35) { P.blast = 1; P.bx = P.sx; P.by = P.sy; } P.holdT = 0; };
+  const onLeave = () => { P.strT = 0; P.holdT = 0; };
+  addEventListener('pointermove', onMove, { passive: true });
+  addEventListener('pointerdown', onDown, { passive: true });
+  addEventListener('pointerup', onUp, { passive: true });
+  addEventListener('pointercancel', onUp, { passive: true });
+  document.documentElement.addEventListener('pointerleave', onLeave);
+  addEventListener('blur', onLeave);
+
+  // ── 开场接力:名字的粒子炸开后,直接汇进光带 ──
+  let rampAt: number | null = document.documentElement.classList.contains('intro-on') ? null : performance.now();
+  const onBurst = (e: Event) => {
+    const d = (e as CustomEvent<{ n: number; data: Float32Array }>).detail;
+    const cr = cv.getBoundingClientRect();
+    parts.forEach((p, i) => {
+      const j = (i % d.n) * 4;
+      p.x = d.data[j] - cr.left + (Math.random() - 0.5) * 6; p.y = d.data[j + 1] - cr.top + (Math.random() - 0.5) * 6;
+      p.vx = d.data[j + 2]; p.vy = d.data[j + 3]; p.t = 1;
+    });
+    rampAt = performance.now() - 150;
+  };
+  addEventListener('intro:burst', onBurst);
+
+  buildRamp(); build();
+  const T0 = performance.now();
+  const dtc = Math.PI * 2;
+  void dtc;
+
+  // 物理按固定步长走(每秒 60 步),高刷新率屏幕上速度也一样
+  const step = (t: number) => {
+    // 沙子:影响范围大、推得远,每颗沙粒反应不同,被吹散后各自慢慢飘回原位
+    const R = W < 640 ? 130 : 230, R2 = R * R;
+    const wind = P.str > 0.02;
+    const speed = Math.hypot(P.mvx, P.mvy);
+    const mx = P.sx - cvLeft, my = P.sy - cvTop;
+    const bx = P.bx - cvLeft, by = P.by - cvTop;
+    const blast = P.blast > 0;
+    for (const p of parts) {
+      home(p, t);
+      if (wind) {
+        const dx = p.x - mx, dy = p.y - my, d2 = dx * dx + dy * dy;
+        if (d2 < R2) {
+          const d = Math.sqrt(d2) || 1, f = (1 - d / R) * (1 - d / R * 0.4) * P.str * (1 - P.hold) * p.rs;
+          // 顺着鼠标的方向被带走,再向两边散开,带一点旋涡
+          p.vx += P.mvx * f * 0.5 + (-dy / d) * f * speed * 0.09 + (dx / d) * f * 1.5 + (Math.random() - 0.5) * f * 1.2;
+          p.vy += P.mvy * f * 0.5 + (dx / d) * f * speed * 0.09 + (dy / d) * f * 1.5 + (Math.random() - 0.5) * f * 1.2;
+          p.t = Math.min(1, p.t + f * 0.8);
+        }
+        if (P.hold > 0.02 && d2 < 320 * 320) {
+          const d = Math.sqrt(d2) || 1, f = (1 - d / 320) * P.hold * P.str * p.rs;
+          p.vx -= (dx / d) * f * 0.75; p.vy -= (dy / d) * f * 0.75; p.t = Math.min(1, p.t + f * 0.35);
+        }
+      }
+      if (blast) {
+        const dx = p.x - bx, dy = p.y - by, d = Math.hypot(dx, dy) || 1;
+        if (d < 420) { const f = (1 - d / 420) * p.rs; p.vx += (dx / d) * f * 22; p.vy += (dy / d) * f * 22; p.t = 1; }
+      }
+      // 飘散的沙粒:轻轻下坠、微微抖动;返回得很慢,每颗的节奏不一样
+      if (p.t > 0.03) { p.vy += 0.03 * p.t; p.vx += (Math.random() - 0.5) * 0.12 * p.t; p.vy += (Math.random() - 0.5) * 0.12 * p.t; }
+      const k = 0.0028 + (1 - p.t) * (1 - p.t) * 0.03;
+      p.vx += (p.hx - p.x) * k; p.vy += (p.hy - p.y) * k;
+      p.vx *= 0.94; p.vy *= 0.94;
+      p.t *= p.dr;
+      p.x += p.vx; p.y += p.vy;
+    }
+    P.mvx *= 0.85; P.mvy *= 0.85;
+    if (blast) P.blast = 0;
+  };
+  let cvLeft = 0, cvTop = 0;
+
+  // 按颜色和亮度分桶再画,几千个粒子也只需要很少的状态切换
+  const NA = 6;
+  const buckets: number[][] = Array.from({ length: 32 * NA }, () => []);
+  const draw = (t: number, now: number) => {
+    const a0 = rampAt === null ? 0 : clamp((now - rampAt) / 900);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    if (a0 <= 0) return;
+    const isDark = dark();
+    ctx.globalCompositeOperation = isDark ? 'lighter' : 'source-over';
+    const mx = P.sx - cvLeft, my = P.sy - cvTop;
+    const base = (isDark ? 0.9 : 0.85) * a0;
+    for (const b of buckets) b.length = 0;
+    for (const p of parts) {
+      const near = P.str > 0.02 ? Math.max(0, 1 - Math.hypot(p.x - mx, p.y - my) / 150) * P.str : 0;
+      const tw = 0.8 + 0.2 * Math.sin(t * p.sp + p.ph);
+      const a = Math.min(1, p.al * tw + near * 0.45);
+      if (a < 0.04) continue;
+      const m = 0.5 + 0.5 * Math.sin(p.u * 5 + p.k + t * 0.25);
+      const ci = Math.min(15, (m * 16) | 0) + (p.k % 3 === 2 ? 16 : 0);
+      const aq = Math.min(NA - 1, (a * NA) | 0);
+      const s = p.s * (1 + p.t * 0.5);
+      buckets[ci * NA + aq].push(p.x - s / 2, p.y - s / 2, s);
+    }
+    for (let ci = 0; ci < 32; ci++) {
+      for (let aq = 0; aq < NA; aq++) {
+        const b = buckets[ci * NA + aq];
+        if (!b.length) continue;
+        ctx.fillStyle = ramp[ci];
+        ctx.globalAlpha = ((aq + 1) / NA) * base;
+        for (let i = 0; i < b.length; i += 3) ctx.fillRect(b[i], b[i + 1], b[i + 2], b[i + 2]);
+      }
+    }
+  };
+
+  if (calm) {
+    // 减少动态效果:画一帧静止的光带就好
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    rampAt = 0;
+    parts.forEach((p) => { home(p, 6); p.x = p.hx; p.y = p.hy; });
+    draw(6, 1e6);
+    return;
+  }
+
+  let last = 0, acc = 0;
+  const loop = (now: number) => {
+    raf = requestAnimationFrame(loop);
+    if (!visible || document.hidden) { last = 0; return; }
+    const t = (now - T0) / 1000;
+    const dt = Math.min(0.1, last ? (now - last) / 1000 : 1 / 60); last = now;
+    const ease = (k: number) => 1 - Math.exp(-dt * k);
+    P.sx += (P.cx - P.sx) * ease(9); P.sy += (P.cy - P.sy) * ease(9);
+    P.str += (P.strT - P.str) * ease(P.strT ? 4 : 2.5);
+    P.hold += (P.holdT - P.hold) * ease(P.holdT ? 5 : 8);
+    const cr = cv.getBoundingClientRect(); cvLeft = cr.left; cvTop = cr.top;
+    acc += dt;
+    for (let i = 0; acc >= 1 / 60 && i < 6; i++) { step(t); acc -= 1 / 60; }
+    if (acc > 0.2) acc = 0;
+    draw(t, now);
+    // 标题:鼠标靠近、按住时,文字边缘泛起光泽
+    cells.forEach((el, i) => {
+      const r = el.getBoundingClientRect();
+      const d = Math.hypot(P.sx - (r.left + r.width / 2), P.sy - (r.top + r.height / 2));
+      const target = Math.min(1, Math.max(0, 1 - d / 280) * P.str + P.hold * 0.5 * P.str);
+      glow[i] += (target - glow[i]) * ease(6);
+      el.style.setProperty('--glow', glow[i].toFixed(3));
+    });
+  };
+  raf = requestAnimationFrame(loop);
+  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; });
+  io.observe(wall);
+  const onTheme = () => buildRamp();
+  addEventListener('themechange', onTheme);
+  addEventListener('resize', build);
+  heroStop = () => {
+    cancelAnimationFrame(raf); io.disconnect();
+    removeEventListener('themechange', onTheme); removeEventListener('resize', build); removeEventListener('intro:burst', onBurst);
+    removeEventListener('pointermove', onMove); removeEventListener('pointerdown', onDown);
+    removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onUp);
+    document.documentElement.removeEventListener('pointerleave', onLeave); removeEventListener('blur', onLeave);
+    cells.forEach((el) => el.style.removeProperty('--glow'));
+  };
+}
+document.addEventListener('astro:before-swap', () => { heroStop?.(); heroStop = null; });
+
 // ───────── 卡片到详情的共享转场 ─────────
 // 元素用 data-vt 标出名字;只给「点的那一个」和新页面里对得上的那个起名,其余照常淡入淡出。
 type VT = HTMLElement & { style: CSSStyleDeclaration & { viewTransitionName: string; viewTransitionClass: string } };
@@ -398,6 +646,7 @@ document.addEventListener('astro:after-swap', () => {
 });
 
 document.addEventListener('astro:page-load', () => {
+  initHero();
   initStory();
   initFlow();
   initAmbient();
